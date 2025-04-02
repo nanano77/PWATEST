@@ -1,0 +1,8 @@
+{
+  "name": "DuckDB 離線查詢 App",
+  "short_name": "DuckDB",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#333333"
+}
