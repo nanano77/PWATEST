@@ -215,7 +215,15 @@ async function uploadMockTable() {
     console.error("❌ Error creating mock table:", error);
   }
 }
-
+async function forceResetBrokenDB() {
+  try {
+    if (db) await db.close(); // 保險起見先關閉
+    await duckdb.deletePersistentDatabase("my-duckdb"); // 注意！這是 static 方法！
+    alert("🚨 已強制清除損壞的 my-duckdb 資料庫，請重新整理頁面");
+  } catch (err) {
+    console.error("❌ 無法清除損壞資料庫:", err);
+  }
+}
 async function updateTableList() {
   console.log("now running updateTableList");
   try {
@@ -318,4 +326,5 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadTable = uploadTable;
   window.runQuery = runQuery;
   window.resetPersistentDB = resetPersistentDB; // ✅ 新增綁定
+  window.forceResetBrokenDB = forceResetBrokenDB;
 });
