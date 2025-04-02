@@ -154,7 +154,21 @@ async function uploadMassiveMockTable() {
   }
 }
 
+async function backupDuckDB(db, filename = 'backup.duckdb') {
+  // 匯出目前記憶體中的 DuckDB 為 Uint8Array
+  const binaryData = await db.exportFile();
 
+  // 建立 Blob 並觸發下載
+  const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 async function uploadMockTable() {
   try {
@@ -336,7 +350,7 @@ async function runQuery() {
 // Initialize DuckDB on page load
 document.addEventListener("DOMContentLoaded", () => {
   initDuckDB();
-
+  window.backupDuckDB = backupDuckDB;
   window.uploadMockTable = uploadMockTable;
   window.uploadTable = uploadTable;
   window.runQuery = runQuery;
