@@ -154,7 +154,7 @@ async function uploadMassiveMockTable() {
   }
 }
 
-async function backupDuckDB(db, filename = 'mydb.duckdb') {
+async function backupDuckDB(filename = 'mydb.duckdb') {
 
 
   const binaryData = await db.getFile(filename);
