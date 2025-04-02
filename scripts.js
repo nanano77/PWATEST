@@ -154,7 +154,7 @@ async function uploadMassiveMockTable() {
   }
 }
 
-async function backupDuckDB(db, filename = 'backup.duckdb') {
+async function backupDuckDB(filename = 'backup.duckdb') {
   // 匯出目前記憶體中的 DuckDB 為 Uint8Array
   const binaryData = await db.exportFile();
 
