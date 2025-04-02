@@ -155,8 +155,7 @@ async function uploadMassiveMockTable() {
 }
 
 async function backupDuckDB(db, filename = 'mydb.duckdb') {
-  const files = await db.listFiles();
-  console.log('目前可用檔案:', files); // 應該會看到 ['mydb.duckdb']
+
 
   const binaryData = await db.getFile(filename);
 
