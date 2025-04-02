@@ -57,7 +57,7 @@ async function initDuckDB() {
 
     // 開啟資料庫，啟用持久化存儲
     await db.open({
-      path: 'mydb.duckdb', // 資料庫名稱
+      path: 'test.duckdb', // 資料庫名稱
       persistent: true     // 啟用持久化存儲到 IndexedDB
     });
 
