@@ -154,11 +154,12 @@ async function uploadMassiveMockTable() {
   }
 }
 
-async function backupDuckDB(filename = 'backup.duckdb') {
-  // 匯出目前記憶體中的 DuckDB 為 Uint8Array
-  const binaryData = await db.exportFile();
+async function backupDuckDB(db, filename = 'mydb.duckdb') {
+  const files = await db.listFiles();
+  console.log('目前可用檔案:', files); // 應該會看到 ['mydb.duckdb']
 
-  // 建立 Blob 並觸發下載
+  const binaryData = await db.getFile(filename);
+
   const blob = new Blob([binaryData], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
