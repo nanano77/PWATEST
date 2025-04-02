@@ -4,47 +4,36 @@ let db;
 
 async function initDuckDB() {
   try {
+    // receive the bundles of files required to run duckdb in the browser
+    // this is the compiled wasm code, the js and worker scripts
+    // worker scripts are js scripts ran in background threads (not the same thread as the ui)
     const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+    // select bundle is a function that selects the files that will work with your browser
     const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 
+    // creates storage and an address for the main worker
     const worker_url = URL.createObjectURL(
       new Blob([`importScripts("${bundle.mainWorker}");`], {
         type: "text/javascript",
       })
     );
 
+    // creates the worker and logger required for an instance of duckdb
     const worker = new Worker(worker_url);
     const logger = new duckdb.ConsoleLogger();
     db = new duckdb.AsyncDuckDB(logger, worker);
+
+    // loads the web assembly module into memory and configures it
     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-    // ✅ Persistent 模式開啟 IndexedDB 儲存
-    await db.open({
-      path: "my-duckdb",
-      persistent: true,
-    });
-
+    // revoke the object url now no longer needed
     URL.revokeObjectURL(worker_url);
-    console.log("✅ DuckDB-Wasm with Persistent IndexedDB initialized.");
-
-    updateTableList();
+    console.log("DuckDB-Wasm initialized successfully.");
   } catch (error) {
     console.error("Error initializing DuckDB-Wasm:", error);
   }
 }
 
-// ✅ 重設 IndexedDB 儲存（清空資料庫）
-async function resetPersistentDB() {
-  try {
-    if (!db) return;
-    await db.close();
-    await db.deletePersistentDatabase("my-duckdb");
-    alert("🧹 資料庫已清除，下次重新整理會重新初始化");
-    console.log("✅ Persistent DuckDB 已清除");
-  } catch (err) {
-    console.error("❌ 清除資料庫錯誤：", err);
-  }
-}
 
 async function uploadTable() {
   try {
@@ -78,6 +67,7 @@ async function uploadTable() {
     const fileType = file.name.split(".").pop()?.toLowerCase() || "";
 
     if (fileType === "csv" || fileType === "parquet" || fileType === "json") {
+      // Register the file in DuckDB's virtual file system
       const virtualFileName = `/${file.name}`;
       await db.registerFileBuffer(virtualFileName, new Uint8Array(arrayBuffer));
 
@@ -115,6 +105,7 @@ async function uploadMassiveMockTable() {
       return;
     }
 
+    // 清空前一次的匯入時間紀錄
     const importLogDiv = document.getElementById("importLogDiv");
     importLogDiv.innerHTML = "";
 
@@ -122,6 +113,7 @@ async function uploadMassiveMockTable() {
     const conn = await db.connect();
     console.log("✅ Database connection established");
 
+    // 建立表格
     const createSQL = `
       CREATE TABLE '${tableName}' (
         id INTEGER,
@@ -131,13 +123,15 @@ async function uploadMassiveMockTable() {
     `;
     await conn.query(createSQL);
 
+    // 產生 10,000 筆資料
     const rows = [];
     for (let i = 1; i <= 10000; i++) {
       const name = `user_${i}`;
-      const age = 20 + (i % 40);
+      const age = 20 + (i % 40); // 20~59
       rows.push(`(${i}, '${name}', ${age})`);
     }
 
+    // 分批插入，每批 500 筆
     const batchSize = 500;
     for (let i = 0; i < rows.length; i += batchSize) {
       const chunk = rows.slice(i, i + batchSize).join(",\n");
@@ -160,6 +154,8 @@ async function uploadMassiveMockTable() {
   }
 }
 
+
+
 async function uploadMockTable() {
   try {
     const tableNameInput = document.getElementById("tableNameInput");
@@ -179,6 +175,7 @@ async function uploadMockTable() {
     const conn = await db.connect();
     console.log("Database connection established");
 
+    // 10 筆假資料（每組 id 都一樣，不影響測試）
     const valuesSQL = `
       (1, 'Alice', 25),
       (2, 'Bob', 32),
@@ -192,6 +189,7 @@ async function uploadMockTable() {
       (10, 'Jenny', 33)
     `;
 
+    // 匯入 10 次，共產生 100 筆資料
     let insertSQL = "";
     for (let i = 0; i < 10; i++) {
       insertSQL += `INSERT INTO '${tableName}' VALUES ${valuesSQL};\n`;
@@ -215,15 +213,9 @@ async function uploadMockTable() {
     console.error("❌ Error creating mock table:", error);
   }
 }
-async function forceResetBrokenDB() {
-  try {
-    if (db) await db.close(); // 保險起見先關閉
-    await duckdb.deletePersistentDatabase("my-duckdb"); // 注意！這是 static 方法！
-    alert("🚨 已強制清除損壞的 my-duckdb 資料庫，請重新整理頁面");
-  } catch (err) {
-    console.error("❌ 無法清除損壞資料庫:", err);
-  }
-}
+
+
+
 async function updateTableList() {
   console.log("now running updateTableList");
   try {
@@ -233,7 +225,8 @@ async function updateTableList() {
     }
 
     const conn = await db.connect();
-    const query = `SELECT table_name as TABLES FROM information_schema.tables WHERE table_schema = 'main';`;
+    console.log("Database connection established");
+    const query = `SELECT table_name as TABLES FROM information_schema.tables WHERE table_schema = 'main';;`;
     const showTables = await conn.query(query);
 
     const rowCount = showTables.numRows;
@@ -248,17 +241,29 @@ async function updateTableList() {
       tablesDiv.style.display = "block";
       queryEntryDiv.style.display = "block";
       arrowToHtmlTable(showTables, "tablesTable");
+      await conn.close();
+      console.log("Database connection closed");
     }
-
-    await conn.close();
   } catch (error) {
     console.error("Error processing file or querying data:", error);
   }
 }
 
+
 function arrowToHtmlTable(arrowTable, htmlTableId) {
+  // Log the arrowTable to see if it's valid
+  console.log("arrowTable:", arrowTable);
+
+  if (!arrowTable) {
+    console.error("The arrowTable object is invalid or null.");
+    return;
+  }
+
   const tableSchema = arrowTable.schema.fields.map((field) => field.name);
+  console.log("tableSchema:", tableSchema); // Log the schema
+
   const tableRows = arrowTable.toArray();
+  console.log("tableRows:", tableRows); // Log the rows
 
   let htmlTable = document.getElementById(htmlTableId);
   if (!htmlTable) {
@@ -290,7 +295,13 @@ async function runQuery() {
   const queryInput = document.getElementById("queryInput");
   let query = queryInput.value;
   const queryResultsDiv = document.getElementById("queryResultsDiv");
+
+  // Make sure the results div is visible before populating it
+  queryResultsDiv.style.display = "block";
+
   const lastQueryDiv = document.getElementById("lastQueryDiv");
+  lastQueryDiv.innerHTML = query;
+
   const resultTable = document.getElementById("resultTable");
   const resultErrorDiv = document.getElementById("resultErrorDiv");
 
@@ -301,6 +312,8 @@ async function runQuery() {
     }
 
     const conn = await db.connect();
+    console.log("Database connection established");
+
     const result = await conn.query(query);
     arrowToHtmlTable(result, "resultTable");
     updateTableList();
@@ -308,23 +321,23 @@ async function runQuery() {
     resultTable.style.display = "block";
     resultErrorDiv.style.display = "none";
     resultErrorDiv.innerHTML = "";
-    lastQueryDiv.innerHTML = query;
+
     await conn.close();
+    console.log("Database connection closed");
   } catch (error) {
     resultTable.style.display = "none";
+    resultTable.innerHTML = "";
     resultErrorDiv.style.display = "block";
     resultErrorDiv.innerHTML = error;
     console.error("Error processing file or querying data:", error);
   }
 }
 
+// Initialize DuckDB on page load
 document.addEventListener("DOMContentLoaded", () => {
   initDuckDB();
 
   window.uploadMockTable = uploadMockTable;
-  window.uploadMassiveMockTable = uploadMassiveMockTable;
   window.uploadTable = uploadTable;
   window.runQuery = runQuery;
-  window.resetPersistentDB = resetPersistentDB; // ✅ 新增綁定
-  window.forceResetBrokenDB = forceResetBrokenDB;
 });
