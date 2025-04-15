@@ -25,7 +25,9 @@ async function initDuckDB() {
 
     // loads the web assembly module into memory and configures it
     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-    await db.open({ path: 'mydb.duckdb', persistent: false });
+    await db.open({ path: ':memory:', persistent: false });
+    
+    // await db.open({ path: 'mydb.duckdb', persistent: false });
     // revoke the object url now no longer needed
     URL.revokeObjectURL(worker_url);
     console.log("DuckDB-Wasm initialized successfully.");
