@@ -2,72 +2,72 @@ import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@latest
 
 let db;
 
-// async function initDuckDB() {
-//   try {
-//     // receive the bundles of files required to run duckdb in the browser
-//     // this is the compiled wasm code, the js and worker scripts
-//     // worker scripts are js scripts ran in background threads (not the same thread as the ui)
-//     const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-//     // select bundle is a function that selects the files that will work with your browser
-//     const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-
-//     // creates storage and an address for the main worker
-//     const worker_url = URL.createObjectURL(
-//       new Blob([`importScripts("${bundle.mainWorker}");`], {
-//         type: "text/javascript",
-//       })
-//     );
-
-//     // creates the worker and logger required for an instance of duckdb
-//     const worker = new Worker(worker_url);
-//     const logger = new duckdb.ConsoleLogger();
-//     db = new duckdb.AsyncDuckDB(logger, worker);
-
-//     // loads the web assembly module into memory and configures it
-//     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-//     await db.open({ path: 'mydb.duckdb', persistent: false });
-//     // revoke the object url now no longer needed
-//     URL.revokeObjectURL(worker_url);
-//     console.log("DuckDB-Wasm initialized successfully.");
-//   } catch (error) {
-//     console.error("Error initializing DuckDB-Wasm:", error);
-//   }
-// }
 async function initDuckDB() {
   try {
-    // 獲取在瀏覽器中運行 DuckDB 所需的文件包
+    // receive the bundles of files required to run duckdb in the browser
+    // this is the compiled wasm code, the js and worker scripts
+    // worker scripts are js scripts ran in background threads (not the same thread as the ui)
     const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-    // 選擇與當前瀏覽器兼容的文件包
+    // select bundle is a function that selects the files that will work with your browser
     const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 
-    // 創建主工作線程的 URL
+    // creates storage and an address for the main worker
     const worker_url = URL.createObjectURL(
       new Blob([`importScripts("${bundle.mainWorker}");`], {
         type: "text/javascript",
       })
     );
 
-    // 創建工作線程和日誌記錄器
+    // creates the worker and logger required for an instance of duckdb
     const worker = new Worker(worker_url);
     const logger = new duckdb.ConsoleLogger();
     db = new duckdb.AsyncDuckDB(logger, worker);
 
-    // 加載 WebAssembly 模組並配置
+    // loads the web assembly module into memory and configures it
     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-
-    // 開啟資料庫，啟用持久化存儲
-    await db.open({
-      path: 'test.duckdb', // 資料庫名稱
-      persistent: true     // 啟用持久化存儲到 IndexedDB
-    });
-
-    // 釋放不再需要的對象 URL
+    await db.open({ path: 'mydb.duckdb', persistent: false });
+    // revoke the object url now no longer needed
     URL.revokeObjectURL(worker_url);
-    console.log("DuckDB-WASM 已成功初始化並啟用持久化存儲。");
+    console.log("DuckDB-Wasm initialized successfully.");
   } catch (error) {
-    console.error("初始化 DuckDB-WASM 時出錯：", error);
+    console.error("Error initializing DuckDB-Wasm:", error);
   }
 }
+// async function initDuckDB() {
+//   try {
+//     // 獲取在瀏覽器中運行 DuckDB 所需的文件包
+//     const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+//     // 選擇與當前瀏覽器兼容的文件包
+//     const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+
+//     // 創建主工作線程的 URL
+//     const worker_url = URL.createObjectURL(
+//       new Blob([`importScripts("${bundle.mainWorker}");`], {
+//         type: "text/javascript",
+//       })
+//     );
+
+//     // 創建工作線程和日誌記錄器
+//     const worker = new Worker(worker_url);
+//     const logger = new duckdb.ConsoleLogger();
+//     db = new duckdb.AsyncDuckDB(logger, worker);
+
+//     // 加載 WebAssembly 模組並配置
+//     await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+
+//     // 開啟資料庫，啟用持久化存儲
+//     await db.open({
+//       path: 'test.duckdb', // 資料庫名稱
+//       persistent: true     // 啟用持久化存儲到 IndexedDB
+//     });
+
+//     // 釋放不再需要的對象 URL
+//     URL.revokeObjectURL(worker_url);
+//     console.log("DuckDB-WASM 已成功初始化並啟用持久化存儲。");
+//   } catch (error) {
+//     console.error("初始化 DuckDB-WASM 時出錯：", error);
+//   }
+// }
 
 async function uploadTable() {
   try {
