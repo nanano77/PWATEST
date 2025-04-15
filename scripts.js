@@ -1,6 +1,32 @@
 import * as duckdb from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@latest/+esm";
 
 let db;
+async function downloadDB() {
+  if (!db) {
+    alert("DuckDB 尚未初始化");
+    return;
+  }
+
+  try {
+    // ✅ 匯出目前記憶體中的資料庫（回傳 Uint8Array）
+    const binaryData = await db.exportDatabase();
+
+    // ✅ 建立 Blob，並轉換為下載連結
+    const blob = new Blob([binaryData], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "my_database.duckdb";
+    a.click();
+
+    // ✅ 清除資源
+    URL.revokeObjectURL(url);
+    console.log("✅ DuckDB 資料庫下載完成");
+  } catch (err) {
+    console.error("❌ 匯出 DuckDB 失敗：", err);
+  }
+}
 
 async function initDuckDB() {
   try {
