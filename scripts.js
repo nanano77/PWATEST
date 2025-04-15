@@ -412,6 +412,7 @@ async function runQuery() {
 // Initialize DuckDB on page load
 document.addEventListener("DOMContentLoaded", () => {
   initDuckDB();
+  window.downloadDB = downloadDB;
   window.backupDuckDB = backupDuckDB;
   window.uploadMockTable = uploadMockTable;
   window.uploadTable = uploadTable;
